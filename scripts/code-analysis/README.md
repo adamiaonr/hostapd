@@ -37,6 +37,7 @@ you should use `nccgen`:
 $ cd <hostapd-ccn-dir>/hostapd-1.0/hostapd/
 $ cp defconfig-ubuntu-xenial-x68_64 .config
 $ make clean; make -i CC='nccgen -ncgcc -ncld -ncfabs'
+$ cd ..
 $ find . -name \*.nccout | xargs cat > code.map.nccout
 ```
 
