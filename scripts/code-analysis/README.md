@@ -14,12 +14,11 @@ codeviz's `genfull` script. all the steps have been tested on Ubuntu 16.04.2 LTS
 ## generating the full graph
 
 ### a note on the `cdepn` method
-first, i've tried to compile a patched version of `gcc` (version 4.6.2). that 
-was a huge mistake and turned out to be useless. so, i tried using the alternative 
-`nccout` method, which worked perfectly.
+first, i've tried to follow the `cdepn` method proposed by the [codeviz README](https://github.com/petersenna/codeviz), which involves compiling a patched version of `gcc` (version 4.6.2). that 
+turned out to be a "huge mistake" (explanation below). so, i ended up using the alternative `nccout` method: not only did it work, it was also quick & easy.
 
 the `cdepn` method proposed in the [codeviz README](https://github.com/petersenna/codeviz) is full of minor 
-errors, and its compilation doesn't work well in x86_64 architectures. anyway, 
+errors which break the compilation of `gcc`. it also doesn't work well in x86_64 architectures. anyway, 
 if you really wanna go down the `cdepn` path, check these sources for 
 troubleshooting [1](http://www.jianshu.com/p/b3ed2b3652ac), [2](https://stephanfr.com/2012/10/20/build-a-debug-version-of-gcc-4-7-2-for-ubuntu-12-04/), [3](http://www.yonch.com/tech/code-call-graphs-codeviz)).
 
