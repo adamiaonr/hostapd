@@ -72,5 +72,5 @@ $ python code_analysis.py --graph-file hostapd.graph --print-callers "hostapd_ne
 the `max-depth` option limits the number of parent 'generations' to 4. the 
 resulting callgraph will be available as `hostapd_new_assoc_sta-4.pdf`. check [this example](https://www.dropbox.com/s/6tqst9l5ytrhwoj/hostapd_new_assoc_sta-4.pdf?dl=0). a few things to note:
 
-* the node labels follow the format <file-where-function-is>:<function-name>
+* the node labels follow the format `<file-where-function-is>:<function-name>`
 * the red nodes refer to functions which don't haven any parent functions. we refer to these as 'origin functions', as these can be the place in the code where actions are ultimately triggered.
