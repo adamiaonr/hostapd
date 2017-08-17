@@ -1,5 +1,5 @@
 # code analysis
-in order to better understand the structure of the hostapd code, i decided to 
+in order to better understand the structure of the `hostapd` code, i decided to 
 give [codeviz](https://github.com/petersenna/codeviz) a try. so, all the steps 
 below assume you have a copy of codeviz's git repo:
 
@@ -7,19 +7,19 @@ below assume you have a copy of codeviz's git repo:
 $ git clone https://github.com/petersenna/codeviz.git
 ```
 
-below i summarized the steps i've followed to generate a `.graph` file using the 
-codeviz's `genfull` script. all the steps have been tested on Ubuntu 16.04.2 LTS 
+below i summarized the steps i've followed to generate a visual representation of 
+`hostapd`'s code. all the steps have been tested on Ubuntu 16.04.2 LTS 
 (Xenial), 4.4.0-70-generic (x86_64) Linux kernel.
 
 ## generating the full graph
 
 ### a note on the `cdepn` method
-first, i've tried to follow the `cdepn` method proposed by the [codeviz README](https://github.com/petersenna/codeviz), which involves compiling a patched version of `gcc` (version 4.6.2). that 
-turned out to be a "huge mistake" (explanation below). so, i ended up using the alternative `nccout` method: not only did it work, it was also quick & easy.
+first, i've tried to follow the `cdepn` method proposed by the [codeviz README](https://github.com/petersenna/codeviz), which involves compiling a patched version of `gcc` (version 4.6.2). in short, the patch makes `gcc` output `.cdepn` files with dependencies in-between function calls, which are then used by codeviz scripts to build a callgraph. 
 
-the `cdepn` method proposed in the [codeviz README](https://github.com/petersenna/codeviz) is full of minor 
-errors which break the compilation of `gcc`. it also doesn't work well in x86_64 architectures. anyway, 
-if you really wanna go down the `cdepn` path, check these sources for 
+that turned out to be a "HUGE mistake" (explanation below). so, i ended up using the alternative `nccout` method: not only did it work, it was also quick & easy.
+
+the `cdepn` method - as described in the [codeviz README](https://github.com/petersenna/codeviz) - is full of minor omissions which break the compilation of `gcc`. it also doesn't work well in x86_64 architectures. anyway, 
+if you really wanna go down that path, check these sources for 
 troubleshooting [1](http://www.jianshu.com/p/b3ed2b3652ac), [2](https://stephanfr.com/2012/10/20/build-a-debug-version-of-gcc-4-7-2-for-ubuntu-12-04/), [3](http://www.yonch.com/tech/code-call-graphs-codeviz)).
 
 ### generating `nccout` files
@@ -70,4 +70,7 @@ $ python code_analysis.py --graph-file hostapd.graph --print-callers "hostapd_ne
 ```
 
 the `max-depth` option limits the number of parent 'generations' to 4. the 
-resulting callgraph will be available as `hostapd_new_assoc_sta-4.pdf`.
+resulting callgraph will be available as `hostapd_new_assoc_sta-4.pdf`. check [this example](https://www.dropbox.com/s/6tqst9l5ytrhwoj/hostapd_new_assoc_sta-4.pdf?dl=0). a few things to note:
+
+* the node labels follow the format <file-where-function-is>:<function-name>
+* the red nodes refer to functions which don't haven any parent functions. we refer to these as 'origin functions', as these can be the place in the code where actions are ultimately triggered.
