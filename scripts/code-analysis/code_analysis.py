@@ -12,10 +12,9 @@ from collections import defaultdict
 
 GENGRAPH_PATH = "/home/adamiaonr/workbench/codeviz/bin/gengraph"
 
-def add_quote(line):
-    nodes = line.split(" -> ")
-    line = ('"%s" -> "%s";\n' % (nodes[0], nodes[1].rstrip(";\n")))
-    return line
+def add_quote(string):
+    nodes = string.split(" -> ")
+    return ('"%s" -> "%s";\n' % (nodes[0], nodes[1].rstrip(";\n")))
 
 def to_pdf(dotfile, out_filename):
 
@@ -25,6 +24,27 @@ def to_pdf(dotfile, out_filename):
 
     with open(os.devnull, 'w') as devnull:
         subprocess.check_call(args, stdout=devnull)
+
+def make_node(func, func_file, is_origin = False):
+
+    if is_origin:
+        return ('"%s" [label="%s:\n%s",style=filled,fillcolor=red];\n' % (func, func_file, func))
+    else:
+        return ('"%s" [label="%s:\n%s"];\n' % (func, func_file, func))
+
+def extract_func_files(filename, called_funcs):
+
+    function_files = defaultdict()
+    with open(filename, 'r') as fin:
+        for line in fin:
+            # check of the function name is in the set of called functions AND 
+            # the current line is a node description line in the .graph file
+            if (line.split(" [")[0] in called_funcs) and ("label=" in line):
+                function_files[line.split(" [")[0]] = line.split("/")[-1].split(":")[0]
+            elif ("->" in line):
+                break
+
+    return function_files
 
 def print_callers(filename, function_name, depth = 3):
 
@@ -38,37 +58,85 @@ def print_callers(filename, function_name, depth = 3):
     dotfile = open(dotfilename, 'w+')
     dotfile.write("""
 digraph {
-overlap = false;
-pack = false;
-splines = curved;
-nodesep = 0.35;
+overlap = scalexy;
+sep = "+25,25";
+splines = true;
+nodesep = 0.6;
 graph [ dpi = 300 ]; 
 node [ fontsize = 8 ];
 edge [ fontsize = 6 ];
 """)
 
+    # keep track of set of called functions
+    called_funcs = set()
+    # add the initial function
+    called_funcs.add(function_name)
+    # keep track of the functions which have no parents: will be referred to as 
+    # 'origin functions'
+    origin_funcs = []
+
     # go 'up', for a max. of depth levels
     for d in xrange(depth):
         # collect the parents of the next function in the current call level
         for func in function_queue[d]:
-            with open(filename, 'r') as fin: 
+
+            # count the nr. of parents for func
+            func_parent_count = 0
+
+            # add parent -> child relationship to dotfile
+            # FIXME: is it really necessary to make so many passes over 
+            # the full .graph file?
+            with open(filename, 'r') as fin:
                 for line in fin:
                     if func in line:
+
+                        pure_func_name = line.split(" -> ")[0]
+
+                        # +1 parent
+                        func_parent_count += 1
                         # we save the next function w/ the format '-> <func-name>'
-                        next_function = ("-> %s" % (line.split(" -> ")[0]))
+                        next_function = ("-> %s" % (pure_func_name))
+
                         if next_function:
+                            # add function to set of called functions (unless 
+                            # the first char is '*')
+                            if pure_func_name[0] != '*':
+                                called_funcs.add(pure_func_name)
+                                
                             # add parent functions to the upper-level queue
                             function_queue[d + 1].append(next_function)
                             # write line in the ouyput .dot file
                             dotfile.write(add_quote(line))
+
+            # if func has no parents, mark it as an 'origin' func
+            if func_parent_count == 0:
+                origin_funcs.append(func.lstrip("-> "))
 
     # add final '}' and close the callgraph .dot file
     dotfile.write("""
 }
 """)
     dotfile.close()
+
+    # extract the files of the functions included in the 
+    func_files = extract_func_files(filename, list(called_funcs))
+
+    # read dotfile contents
+    with open(dotfilename, 'r') as dotfile:
+        contents = dotfile.readlines()
+
+    # insert correct node labels
+    for i, func in enumerate(list(called_funcs)):
+        contents.insert(9 + i, make_node(func, func_files[func], (func in origin_funcs)))
+
+    with open(dotfilename, 'w+') as dotfile:
+        # complete the file
+        contents = "".join(contents)
+        dotfile.write(contents)
+        dotfile.close()
+
     # convert .dot file to .pdf
-    to_pdf(dotfilename, ("%s-%d" % (function_name, depth)))
+    to_pdf(dotfilename, ("%s-%d" % (function_name, depth)))    
 
 if __name__ == "__main__":
 
@@ -101,6 +169,6 @@ if __name__ == "__main__":
     if args.print_callers:
         print_callers(args.graph_file, args.print_callers, int(args.max_depth))
     else:
-        sys.stderr.write("""%s: [ERROR] please supply a valid case\n""" % sys.argv[0]) 
+        sys.stderr.write("""%s: [ERROR] please supply a valid case\n""" % sys.argv[0])
         parser.print_help()
         sys.exit(1)
